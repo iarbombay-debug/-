@@ -6,7 +6,6 @@
   <title>PvZ 2 — конструктор кастом зомби</title>
 
   <style>
-    /* ---------- Цвета и общие настройки ---------- */
     :root {
       box-sizing: border-box;
       padding-top: env(safe-area-inset-top, 0px);
@@ -28,7 +27,7 @@
       scroll-padding-top: env(safe-area-inset-top, 0px);
     }
 
-    /* Тёмная тема (автоматически, по настройкам системы) */
+
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
         --bg: #141a11;
@@ -44,7 +43,6 @@
       }
     }
 
-    /* Тёмная тема (принудительно) */
     :root[data-theme="dark"] {
       --bg: #141a11;
       --panel: #1c2418;
@@ -92,7 +90,6 @@
       margin: 0 0 24px;
     }
 
-    /* ---------- Сетка: две колонки, на телефоне одна ---------- */
     .grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -112,7 +109,7 @@
       padding: 16px;
     }
 
-    /* ---------- Кнопки выбора вида зомби ---------- */
+
     .types {
       display: flex;
       gap: 8px;
@@ -139,7 +136,7 @@
       font-weight: 700;
     }
 
-    /* ---------- Поля ввода ---------- */
+
     label {
       display: block;
       margin-bottom: 12px;
@@ -179,7 +176,6 @@
       font-weight: 400;
     }
 
-    /* ---------- Блок с кодом ---------- */
     pre {
       margin: 0;
       background: var(--code);
@@ -191,7 +187,6 @@
       font-size: 0.8rem;
     }
 
-    /* ---------- Кнопки действий ---------- */
     .row {
       display: flex;
       gap: 8px;
