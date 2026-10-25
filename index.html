@@ -464,7 +464,6 @@ input[type="file"]::file-selector-button:hover {
 
   <script>
 
-    // Текущий выбранный вид зомби: "basic" | "garg" | "boom"
     var type = "basic";
 var IMP_TYPES = [
   { label: "Обычный имп", value: "tutorial_imp" },
@@ -497,8 +496,7 @@ var IMP_TYPES = [
   { label: "Имп в трусах", value: "imppear_imp" }
 
 ];  
-// Характеристики каждого вида хранятся отдельно.
-// Здесь же начальные значения, меняй их как нужно.
+
 var values = {
   basic: { hp: 190,  speed: 0.185, art: 1,   dmg: 100 },
   garg:  { hp: 3600, speed: 0.24, art: 1, smash: 1500, imptype: "tutorial_imp" },
@@ -508,14 +506,14 @@ var values = {
   prospector: { hp: 190,  speed: 0.16, art: 1,   dmg: 100, stuntime: 2.5, timetotravel: 1.5, launchcountdown: 10 },
 };
 
-// Записать текущие значения полей в память выбранного вида
+
 function saveFields() {
   for (var id in values[type]) {
     values[type][id] = $(id).value;
   }
 }
 
-// Показать в полях сохранённые значения выбранного вида
+
 function loadFields() {
   for (var id in values[type]) {
     $(id).value = values[type][id];
@@ -536,7 +534,7 @@ function loadFields() {
         select.appendChild(option);
       });
     }
-    // Число из поля ввода (если пусто или не число — вернёт 0)
+
     function num(id) {
       var value = parseFloat($(id).value);
       return isNaN(value) ? 0 : value;
@@ -554,7 +552,7 @@ function loadFields() {
       return ok;
     }
 
-    // Общий список ScaledProps; extra — дополнительные элементы (например, SmashDamage)
+ 
     function stats(extra) {
       var list = [
         { Arg1: 1.3, Arg2: 0.05, Formula: "standard", Key: "Hitpoints" },
@@ -566,7 +564,7 @@ function loadFields() {
     }
 
 
-    /* ==================== Сборка JSON зомби ==================== */
+
 
     function build() {
       var name = $("name").value.trim() || "MyZombie";
@@ -574,7 +572,6 @@ function loadFields() {
       var speed = num("speed");
       var artScale = num("art");
 
-      // Поля, общие для обычного зомби и бумбоксера
       var base = {
         ArtCenter: { x: 90, y: 125 },
         AttackRect: { mHeight: 95, mWidth: 20, mX: 15, mY: 0 },
@@ -1005,16 +1002,14 @@ function loadFields() {
     }
 
 
-    /* ==================== Отрисовка страницы ==================== */
 
     function render() {
-      // Показать только поля, подходящие выбранному виду
       document.querySelectorAll("[data-for]").forEach(function (label) {
         var kinds = label.dataset["for"].split(" ");
         label.classList.toggle("hide", kinds.indexOf(type) < 0);
       });
 
-      // Подсветить выбранную кнопку вида
+
       document.querySelectorAll("#types button").forEach(function (button) {
         button.setAttribute("aria-pressed", button.dataset.t === type);
       });
@@ -1023,7 +1018,7 @@ function loadFields() {
       $("out").textContent = JSON.stringify(build(), null, 4);
     }
 
-    // Скачать текст как файл
+
     function save(text, fileName) {
       var link = document.createElement("a");
       link.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
@@ -1036,26 +1031,23 @@ function loadFields() {
     }
 
 
-    /* ==================== Обработчики событий ==================== */
 
-    // Выбор вида зомби
+
     document.querySelectorAll("#types button").forEach(function (button) {
       button.onclick = function () {
-      saveFields();      // сначала запомнить поля старого вида
+      saveFields();      
       type = button.dataset.t;
-      loadFields();      // потом показать значения нового
+      loadFields();      
       render();
       };
     });
 
-    // Любое изменение в полях — пересобираем код
     document.querySelectorAll("input[type=text], input[type=number]").forEach(function (input) {
       input.oninput = render;
     });
 document.querySelectorAll("select").forEach(function (select) {
   select.addEventListener("change", render);
 });
-    // Кнопка «Скопировать»
     $("copy").onclick = function () {
       var text = $("out").textContent;
 
@@ -1068,7 +1060,6 @@ document.querySelectorAll("select").forEach(function (select) {
           $("m1").textContent = "Скопировано.";
         })
         .catch(function () {
-          // Запасной вариант: выделяем код, пользователь копирует сам
           var range = document.createRange();
           range.selectNodeContents($("out"));
 
@@ -1080,7 +1071,6 @@ document.querySelectorAll("select").forEach(function (select) {
         });
     };
 
-    // Кнопка «Скачать .json»
     $("dl").onclick = function () {
       if (!nameOk()) {
         $("m1").textContent = "Сначала исправь имя.";
@@ -1091,7 +1081,6 @@ document.querySelectorAll("select").forEach(function (select) {
       $("m1").textContent = "Файл скачан.";
     };
 
-    // Кнопка «Вставить и скачать уровень»
     $("ins").onclick = function () {
       var file = $("lvl").files[0];
 
@@ -1123,7 +1112,6 @@ document.querySelectorAll("select").forEach(function (select) {
         });
     };
 
-    // Первая отрисовка при загрузке страницы
     setupImpTypeOptions();
     loadFields();
     render();
