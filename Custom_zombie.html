@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>PvZ 2 — конструктор кастом зомби</title>
+
+  <style>
+    /* ---------- Цвета и общие настройки ---------- */
+    :root {
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+
+      --bg: #eef2e4;
+      --panel: #fbfdf5;
+      --ink: #1d2a17;
+      --muted: #5c6b52;
+      --line: #c9d4b8;
+      --accent: #4d7c2a;
+      --accent-ink: #fff;
+      --code: #1d2a17;
+      --code-ink: #d9f2b8;
+      --err: #b3261e;
+    }
+
+    html {
+      scroll-padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    /* Тёмная тема (автоматически, по настройкам системы) */
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #141a11;
+        --panel: #1c2418;
+        --ink: #e6efd9;
+        --muted: #93a385;
+        --line: #324029;
+        --accent: #8fc95a;
+        --accent-ink: #14200b;
+        --code: #0d1209;
+        --code-ink: #d9f2b8;
+        --err: #ff8a80;
+      }
+    }
+
+    /* Тёмная тема (принудительно) */
+    :root[data-theme="dark"] {
+      --bg: #141a11;
+      --panel: #1c2418;
+      --ink: #e6efd9;
+      --muted: #93a385;
+      --line: #324029;
+      --accent: #8fc95a;
+      --accent-ink: #14200b;
+      --code: #0d1209;
+      --code-ink: #d9f2b8;
+      --err: #ff8a80;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+      line-height: 1.5;
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      margin: 0 0 4px;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: 1.05rem;
+      margin: 0 0 10px;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 0 0 24px;
+    }
+
+    /* ---------- Сетка: две колонки, на телефоне одна ---------- */
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 760px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    /* ---------- Кнопки выбора вида зомби ---------- */
+    .types {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .types button {
+      flex: 1;
+      min-width: 110px;
+      padding: 10px;
+      border: 2px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 8px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .types button[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 700;
+    }
+
+    /* ---------- Поля ввода ---------- */
+    label {
+      display: block;
+      margin-bottom: 12px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    label small {
+      display: block;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    input[type=text],
+    input[type=number] {
+      width: 100%;
+      margin-top: 4px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--ink);
+      font: inherit;
+    }
+
+    input:focus-visible,
+    button:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .err {
+      color: var(--err);
+      font-size: 0.85rem;
+      min-height: 1.2em;
+      margin-top: 2px;
+      font-weight: 400;
+    }
+
+    /* ---------- Блок с кодом ---------- */
+    pre {
+      margin: 0;
+      background: var(--code);
+      color: var(--code-ink);
+      padding: 12px;
+      border-radius: 8px;
+      overflow: auto;
+      max-height: 440px;
+      font-size: 0.8rem;
+    }
+
+    /* ---------- Кнопки действий ---------- */
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+
+    .btn {
+      padding: 9px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: var(--accent-ink);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn.alt {
+      background: transparent;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .msg {
+      font-size: 0.9rem;
+      min-height: 1.3em;
+      color: var(--muted);
+    }
+
+    .hide {
+      display: none;
+    }
+select {
+  width: 100%;
+  margin-top: 5px;
+  padding: 10px 38px 10px 12px;
+
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+
+  color: var(--ink);
+  background-color: var(--bg);
+
+  border: 1px solid var(--line);
+  border-radius: 8px;
+
+  cursor: pointer;
+  outline: none;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234d7c2a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input[type="file"] {
+  max-width: 100%;
+  font: inherit;
+  font-size: 14px;
+}
+
+input[type="file"]::file-selector-button {
+  padding: 7px 12px;
+  margin-right: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: var(--bg);
+}
+.theme-toggle {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 22px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.theme-toggle:hover {
+  background: var(--line);
+}
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Конструктор зомби PvZ 2</h1>
+    <button class="theme-toggle" id="themeToggle" type="button" title="">◐</button>
+</button>
+    <p class="sub">
+      Выбери вид, заполни поля - JSON собирается сам.
+      Можно сразу вставить зомби в файл уровня.
+    </p>
+
+    <div class="grid">
+
+      <section class="panel">
+
+        <div class="types" id="types">
+          <button data-t="basic" aria-pressed="true">Обычный зомби</button>
+          <button data-t="garg" aria-pressed="false">Гаргантюа</button>
+          <button data-t="boom" aria-pressed="false">Бумбоксер</button>
+          <button data-t="scull" aria-pressed="false">Дед с черепом</button>
+          <button data-t="firebreather" aria-pressed="false">Факир</button>
+          <button data-t="prospector" aria-pressed="false">Старатель</button>
+        </div>
+
+        <label>
+          Имя (только английские буквы и цифры)
+          <input type="text" id="name" value="MyZombie" autocomplete="off">
+          <span class="err" id="nameErr"></span>
+        </label>
+
+        <label>
+          Хп
+          <input type="number" id="hp" value="3600">
+        </label>
+
+        <label>
+          Скорость
+          <input type="number" id="speed" step="0.01" value="0.24">
+        </label>
+
+        <label>
+          Визуальный размер
+          <input type="number" id="art" step="0.01" value="1">
+        </label>
+
+        <!-- Поля, которые показываются только для нужных видов (data-for) -->
+        <label data-for="basic boom">
+          Сила укуса (EatDPS)
+          <input type="number" id="dmg" value="100">
+        </label>
+        
+              <label data-for="garg">
+          Имп гаргантюа
+          <select id="imptype"></select>
+        </label>
+
+        <label data-for="garg">
+          Урон по гипно-зомби и зомбойдам (SmashDamage)
+          <input type="number" id="smash" value="1500">
+        </label>
+
+        <label data-for="boom">
+          Клетка, где включает музыку
+          <small>5 = шестая клетка от дома</small>
+          <input type="number" id="col" value="5">
+        </label>
+
+        <label data-for="boom">
+          Длительность музыки
+          <input type="number" id="dur" step="0.1" value="10">
+        </label>
+
+        <label data-for="boom">
+          Радиус музыки
+          <small>800 = вся лужайка</small>
+          <input type="number" id="rad" value="800">
+        </label>
+
+        <label data-for="scull">
+          Урон от лазера
+          <input type="number" id="laserdmg" value="4001">
+        </label>
+
+      <label data-for="scull">
+  Длина лазера
+  <input type="number" id="length" value="220">
+</label>
+
+<label data-for="scull">
+  Перезарядка
+  <input type="number" id="cd" step="0.1" value="5">
+</label>
+
+<label data-for="scull">
+  Время зарядки
+  <input type="number" id="chargingtime" step="0.1" value="5">
+</label>
+
+<label data-for="firebreather">
+  Урон факира
+          <small> За 1 секунду</small>
+  <input type="number" id="flamedps" value="1500">
+</label>
+
+<label data-for="firebreather">
+  Радиус атаки факира
+  <input type="number" id="flamerange" step="0.01" value="2.25">
+</label>
+
+<label data-for="firebreather">
+  Посмертный урон факира
+  <input type="number" id="deathexplosindmg" value="300">
+</label>
+
+<label data-for="firebreather">
+  Радиус посмертного урона факира
+  <input type="number" id="deathexplosinradius" step="0.1" value="0.5">
+</label>
+
+<label data-for="firebreather">
+  Кд атаки факира
+  <input type="number" id="flamecd" step="0.1" value="0">
+</label>
+
+<label data-for="prospector">
+  Время стана
+            <small> Сколько он стоит на месте после прилета</small>
+  <input type="number" id="stuntime" step="0.1" value="0">
+</label>
+
+<label data-for="prospector">
+  Время полета
+  <input type="number" id="timetotravel" step="0.1" value="0">
+</label>
+
+<label data-for="prospector">
+  Кд перед вылетом  
+  <input type="number" id="launchcountdown" step="0.1" value="0">
+</label>
+
+      </section>
+      <section>
+
+        <div class="panel">
+          <h2>Код зомби</h2>
+          <pre id="out"></pre>
+
+          <div class="row">
+            <button class="btn" id="copy">Скопировать</button>
+            <button class="btn alt" id="dl">Скачать .json</button>
+          </div>
+
+          <div class="msg" id="m1" role="status"></div>
+        </div>
+
+        <div class="panel" style="margin-top: 16px">
+          <h2>Вставить в уровень</h2>
+          <input type="file" id="lvl" accept=".json,application/json">
+
+          <div class="row">
+            <button class="btn" id="ins">Вставить и скачать уровень</button>
+          </div>
+
+          <div class="msg" id="m2" role="status"></div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <script>
+
+    // Текущий выбранный вид зомби: "basic" | "garg" | "boom"
+    var type = "basic";
+var IMP_TYPES = [
+  { label: "Обычный имп", value: "tutorial_imp" },
+  { label: "Египетский имп", value: "egypt_imp" },
+  { label: "Пиратский имп", value: "pirate_imp" },
+  { label: "Имп-йети", value: "iceage_imp" },
+  { label: "Имп Затерянного Города", value: "lostcity_imp" },
+  { label: "Имп-робот", value: "future_imp" },
+  { label: "Имп-монах", value: "dark_imp" },
+  { label: "Имп-дракон", value: "dark_imp_dragon" },
+  { label: "Имп-панк", value: "eighties_imp" },
+  { label: "Юрский имп", value: "dino_imp" },
+  { label: "Пляжный имп", value: "beach_imp" },
+  { label: "Имп-суперфан", value: "modern_superfanimp" },
+  { label: "Гарго-имп", value: "zcorp_imp" },
+  { label: "Гонщик зкорп без стула", value: "zcorp_racer" },
+  { label: "Римский имп", value: "roman_imp" },
+  { label: "Цирковой имп в шлеме", value: "carnie_imp" },
+  { label: "Сиамский имп", value: "carnie_imp_twins" },
+  { label: "Разъединённый сиамский имп", value: "carnie_imp_split" },
+  { label: "Лунный имп-суперфан", value: "lunar_superfanimp" },
+  { label: "Имп-мяч", value: "sportzball_imp" },
+  { label: "Имп-сосиска", value: "summer_imp" },
+  { label: "Большеголовый имп", value: "bighead_imp" },
+  { label: "Имп-Купидон", value: "valentines_imp" },
+  { label: "Импштейн", value: "halloween_imp" },
+  { label: "Цыпленок-имп", value: "spring_imp" },
+  { label: "Эльф-имп", value: "holiday_imp" },
+  { label: "Удачливый имп", value: "leprachaun_imp" },
+  { label: "Имп в трусах", value: "imppear_imp" }
+
+];  
+// Характеристики каждого вида хранятся отдельно.
+// Здесь же начальные значения, меняй их как нужно.
+var values = {
+  basic: { hp: 190,  speed: 0.185, art: 1,   dmg: 100 },
+  garg:  { hp: 3600, speed: 0.24, art: 1, smash: 1500, imptype: "tutorial_imp" },
+  boom:  { hp: 250,  speed: 0.185, art: 1,   dmg: 100, col: 5, dur: 8, rad: 800 },
+  scull: { hp: 250,  speed: 0.185, art: 1,   dmg: 100,   laserdmg: 4001,   length: 220,   cd: 5,   chargingtime: 5},
+  firebreather: {hp: 625, speed: 0.5, art: 1, dmg: 100, deathexplosindmg: 300, flamerange: 2.25, deathexplosinradius: 0.5, flamecd: 0, flamedps: 1500},
+  prospector: { hp: 190,  speed: 0.16, art: 1,   dmg: 100, stuntime: 2.5, timetotravel: 1.5, launchcountdown: 10 },
+};
+
+// Записать текущие значения полей в память выбранного вида
+function saveFields() {
+  for (var id in values[type]) {
+    values[type][id] = $(id).value;
+  }
+}
+
+// Показать в полях сохранённые значения выбранного вида
+function loadFields() {
+  for (var id in values[type]) {
+    $(id).value = values[type][id];
+  }
+}
+    // Короткая запись для document.getElementById
+    function $(id) {
+      return document.getElementById(id);
+    }
+    function setupImpTypeOptions() {
+      var select = $("imptype");
+      select.textContent = "";
+
+      IMP_TYPES.forEach(function (imp) {
+        var option = document.createElement("option");
+        option.value = imp.value;
+        option.textContent = imp.label;
+        select.appendChild(option);
+      });
+    }
+    // Число из поля ввода (если пусто или не число — вернёт 0)
+    function num(id) {
+      var value = parseFloat($(id).value);
+      return isNaN(value) ? 0 : value;
+    }
+
+    // Проверка имени: только английские буквы и цифры
+    function nameOk() {
+      var name = $("name").value.trim();
+      var ok = /^[A-Za-z0-9]+$/.test(name);
+
+      $("nameErr").textContent = ok
+        ? ""
+        : "Имя: только английские буквы и цифры, без пробелов.";
+
+      return ok;
+    }
+
+    // Общий список ScaledProps; extra — дополнительные элементы (например, SmashDamage)
+    function stats(extra) {
+      var list = [
+        { Arg1: 1.3, Arg2: 0.05, Formula: "standard", Key: "Hitpoints" },
+        { Arg1: 1.3, Arg2: 0.05, Formula: "standard", Key: "EatDPS" },
+        { Formula: "constant", Key: "Speed" },
+        { Formula: "constant", Key: "WavePointCost" }
+      ];
+      return list.concat(extra || []);
+    }
+
+
+    /* ==================== Сборка JSON зомби ==================== */
+
+    function build() {
+      var name = $("name").value.trim() || "MyZombie";
+      var hp = num("hp");
+      var speed = num("speed");
+      var artScale = num("art");
+
+      // Поля, общие для обычного зомби и бумбоксера
+      var base = {
+        ArtCenter: { x: 90, y: 125 },
+        AttackRect: { mHeight: 95, mWidth: 20, mX: 15, mY: 0 },
+        Cost: 150,
+        GroundTrackName: "ground_swatch",
+        HitRect: { mHeight: 95, mWidth: 32, mX: 10, mY: 10 },
+        ShadowOffset: { x: 5, y: 0, z: 1.4 }
+      };
+
+      // ----- Обычный зомби -----
+      if (type === "basic") {
+        return [
+          {
+            objclass: "ZombieType",
+            aliases: [name],
+            objdata: {
+              TypeName: name,
+              IntegerID: 1,
+              ZombieClass: "ZombieBasic",
+              Properties: "RTID(Zombie" + name + "Default@.)",
+              ResourceGroups: ["ZombieTutorialGroup"],
+              AudioGroups: [],
+              AnimRigClass: "ZombieAnimRig_Tutorial",
+              PopAnim: "POPANIM_ZOMBIE_ZOMBIE_TUTORIAL",
+              HomeWorld: "modern",
+              IsBasicZombie: true
+            }
+          },
+          {
+            aliases: ["Zombie" + name + "Default"],
+            objclass: "ZombiePropertySheet",
+            objdata: Object.assign({}, base, {
+              ArtScale: artScale,
+              CanSpawnPlantFood: true,
+              EatDPS: num("dmg"),
+              Hitpoints: hp,
+              ScaledProps: stats(),
+              Speed: speed,
+              WavePointCost: 100,
+              Weight: 1000,
+              ZombieStats: [
+                { Type: "toughness", Value: "toughness1" },
+                { Type: "speed", Value: "speed2" }
+              ]
+            })
+          }
+        ];
+      }
+
+      // ----- Бумбоксер -----
+      if (type === "boom") {
+        return [
+          {
+            objclass: "ZombieType",
+            aliases: [name],
+            objdata: {
+              TypeName: name,
+              IntegerID: 214,
+              ZombieClass: "ZombieEightiesBoombox",
+              Properties: "RTID(Zombie" + name + "@.)",
+              ResourceGroups: ["ZombieEightiesBoomboxGroup"],
+              AudioGroups: ["ZombieEightiesBoomBoxAudio"],
+              AnimRigClass: "ZombieAnimRig_EightiesBoombox",
+              PopAnim: "POPANIM_ZOMBIE_ZOMBIE_80S_BOOMBOX",
+              HomeWorld: "eighties"
+            }
+          },
+          {
+            aliases: ["Zombie" + name],
+            objclass: "ZombieEightiesBoomboxProps",
+            objdata: Object.assign({}, base, {
+              ArtScale: artScale,
+              BoomBoxColumn: num("col"),
+              BoomBoxDuration: num("dur"),
+              EatDPS: num("dmg"),
+              Hitpoints: hp,
+              JamStyle: "jam_ballad",
+              PlantBoomRestrictionSet: {
+                List: [
+                  "phatbeet", "cherry_bomb", "jalapeno", "spikeweed",
+                  "spikerock", "grapeshot", "electriccurrant"
+                ],
+                ListType: "excludelist"
+              },
+              PlantFreezeRadius: num("rad"),
+              ScaledProps: stats(),
+              Speed: speed,
+              WavePointCost: 300,
+              Weight: 1000,
+              ZombieStats: [
+                { Type: "toughness", Value: "toughness4" },
+                { Type: "speed", Value: "speed2" }
+              ]
+            })
+          }
+        ];
+      }
+      // ----- Дед с черепом -----
+      if (type === "scull") {
+        return [
+          {
+            objclass: "ZombieType",
+            aliases: [name],
+            objdata: {
+              TypeName: name,
+              IntegerID: 194,
+              ZombieClass: "ZombieCrystalSkull",
+              Properties: "RTID(Zombie" + name + "Default@.)",
+              ResourceGroups: ["ZombieLostCityCrystalSkullGroup"],
+              AudioGroups: ["ZombieLostCityCrystalSkullAudio"],
+              AnimRigClass: "ZombieAnimRig_CrystalSkull",
+              PopAnim: "POPANIM_ZOMBIE_ZOMBIE_LOSTCITY_CRYSTALSKULL",
+              HomeWorld: "lostcity"
+            }
+          },
+          {
+            aliases: ["Zombie" + name + "Default"],
+            objclass: "ZombieCrystalSkullProps",
+            objdata: Object.assign({}, base, {
+              ArtScale: artScale,
+              CanSpawnPlantFood: true,
+              ChargingTime: num("chargingtime"),
+              ChargingTimeDecrementPerFiveSun: 0.2,
+              EatDPS: num("dmg"),
+              Hitpoints: hp,
+              LaserBeamDamage: num("laserdmg"),
+              LaserBeamLength: num("length"),
+              LaserCooldownTime: num("cd"),
+              ScaledProps: stats([
+                { Arg1: 1.3, Arg2: 0.05, Formula: "standard", Key: "LaserBeamDamage" }
+              ]),
+              ShadowOffset: { x: 10, y: 0, z: 1.2 },
+              Speed: speed,
+              WavePointCost: 500,
+              Weight: 3000,
+              ZombieStats: [
+                { Type: "toughness", Value: "toughness3" },
+                { Type: "speed", Value: "speed2" }
+              ]
+            })
+          }
+        ];
+      }
+      // ----- Факир -----
+      if (type === "firebreather") {
+        return [
+		{
+			"objclass": "ZombieType",
+			"aliases": [name],
+			"objdata": {
+				"TypeName": name,
+				"IntegerID": 424,
+				"ZombieClass": "ZombieCarnieFireBreather",
+				"Properties": "RTID(Zombie" + name + "Default@.)",
+				"ResourceGroups": ["ZombieCarnieFirebreatherGroup"],
+				"AudioGroups": [
+					"ZombieCarnieFirebreatherAudio",
+					"ZombieEgyptExplorerAudio"],
+				"AnimRigClass": "ZombieAnimRig_FireBreather",
+				"PopAnim": "POPANIM_ZOMBIE_ZOMBIE_FIRE_BREATHER",
+				"HomeWorld": "rift2",
+				"AlmanacBackdropName": "carnival",
+				"Placeable": true
+			}
+		},
+		{
+			"aliases": ["Zombie" + name + "Default"],
+			"objclass": "ZombieCarnieFireBreatherProps",
+			"objdata": {
+      ArtScale: artScale,
+				"ArtCenter": {
+					"x": 90,
+					"y": 123
+				},
+				"AttackRect": {
+					"mHeight": 95,
+					"mWidth": 20,
+					"mX": 15,
+					"mY": 0
+				},
+				"CanSpawnPlantFood": true,
+				"Cost": 150,
+        EatDPS: num("dmg"),
+				"GroundTrackName": "ground_swatch",
+				"HitRect": {
+					"mHeight": 95,
+					"mWidth": 32,
+					"mX": 10,
+					"mY": 10
+				},
+				"Hitpoints": hp,
+				"FlameDamagePerSecond": num("flamedps"),
+				"FlameRange": num("flamerange"),
+				"FlameCooldownTime": num("flamecd"),
+				"DeathExplosionDamage": num("deathexplosindmg"),
+				"DeathExplosionRadius": num("deathexplosinradius"),
+				"SkipHeadDropState": true,
+				"ShrunkenScale": 0.500000,
+				"ScaledProps": [
+					{
+						"Arg1": 1.300000,
+						"Arg2": 0.050000,
+						"Formula": "standard",
+						"Key": "Hitpoints"
+					},
+					{
+						"Arg1": 1.300000,
+						"Arg2": 0.050000,
+						"Formula": "standard",
+						"Key": "EatDPS"
+					},
+					{
+						"Formula": "constant",
+						"Key": "Speed"
+					},
+					{
+						"Formula": "constant",
+						"Key": "WavePointCost"
+					},
+					{
+						"Arg1": 1.300000,
+						"Arg2": 0.050000,
+						"Formula": "standard",
+						"Key": "FlameDamagePerSecond"
+					}
+				],
+				"ShadowOffset": {
+					"x": 10,
+					"y": 0,
+					"z": 1.200000
+				},
+				"Speed": speed,
+				"WavePointCost": 600,
+				"Weight": 3000,
+				"ZombieStats": [
+					{
+						"Type": "toughness",
+						"Value": "toughness3"
+					},
+					{
+						"Type": "speed",
+						"Value": "speed2"
+          }
+          ]
+					}
+        }
+				];
+			}
+      // ----- Старатель -----
+      if (type === "prospector") {
+        return [
+		{
+			"objclass": "ZombieType",
+			"aliases": [name],
+			"objdata": {
+				"TypeName": name,
+				"IntegerID": 38,
+				"ZombieClass": "ZombieProspector",
+				"Properties": "RTID(Zombie" + name + "Default@.)",
+				"ResourceGroups": ["ZombieWestProspectorGroup"],
+				"AudioGroups": ["ZombieCowboyProspectorAudio"],
+				"AnimRigClass": "ZombieAnimRig_Prospector",
+				"PopAnim": "POPANIM_ZOMBIE_ZOMBIE_PROSPECTOR",
+				"HomeWorld": "cowboy"
+			}
+		},
+		{
+			"aliases": ["Zombie" + name + "Default"],
+			"objclass": "ZombieProspectorProps",
+			"objdata": {
+        ArtScale: artScale,
+				"Apex": 250,
+				"ArtCenter": {
+					"x": 100,
+					"y": 130
+				},
+				"AttackRect": {
+					"mHeight": 95,
+					"mWidth": 20,
+					"mX": 15,
+					"mY": 0
+				},
+				"CanSpawnPlantFood": true,
+				"Cost": 150,
+				"EatDPS": num("dmg"),
+				"GroundTrackName": "ground_swatch",
+				"HitRect": {
+					"mHeight": 95,
+					"mWidth": 32,
+					"mX": 10,
+					"mY": 10
+				},
+				"Hitpoints": hp,
+				"LaunchCountdown": num("launchcountdown"),
+				"ScaledProps": [
+					{
+						"Arg1": 1.300000,
+						"Arg2": 0.050000,
+						"Formula": "standard",
+						"Key": "Hitpoints"
+					},
+					{
+						"Arg1": 1.300000,
+						"Arg2": 0.050000,
+						"Formula": "standard",
+						"Key": "EatDPS"
+					},
+					{
+						"Formula": "constant",
+						"Key": "Speed"
+					},
+					{
+						"Formula": "constant",
+						"Key": "WavePointCost"
+					}
+				],
+				"ShadowOffset": {
+					"x": 0,
+					"y": 0,
+					"z": 1.200000
+				},
+				"Speed": speed,
+				"StunTime": num("stuntime"),
+				"TimeToTravel": num("timetotravel"),
+				"WavePointCost": 200,
+				"Weight": 3000,
+				"ZombieStats": [
+					{
+						"Type": "toughness",
+						"Value": "toughness1"
+					},
+					{
+						"Type": "speed",
+						"Value": "speed1"
+					}
+				]
+			}
+		}
+  ];
+  }
+      // ----- Гаргантюа  -----
+
+      // Слои импа, которые скрываются, когда гаргантюа его бросает
+      var impLayers = [
+        "zombie_imp_skull", "zombie_imp_jaw", "Zombie_gargantuar_whiterope",
+        "zombie_imp_arm_inner_lower", "zombie_imp_arm_inner_upper",
+        "zombie_imp_arm_outer_lower", "zombie_imp_arm_outer_upper_01",
+        "zombie_imp_arm_outer_upper_02", "zombie_imp_arms_outer_upper",
+        "zombie_imp_eye", "zombie_imp_eye_sm", "zombie_imp_hand_inner",
+        "zombie_imp_hand_outer", "zombie_imp_leg_inner_lower",
+        "zombie_imp_leg_inner_upper", "zombie_imp_leg_outer_lower",
+        "zombie_imp_leg_outer_upper", "zombie_imp_pupil", "zombie_imp_torso",
+        "zombie_imp_waist", "zombie_imp_toe_outer", "zombie_imp_toe_inner"
+      ];
+
+      return [
+        {
+          objclass: "ZombieType",
+          aliases: [name],
+          objdata: {
+            TypeName: name,
+            IntegerID: 80,
+            ZombieClass: "ZombieGargantuar",
+            Properties: "RTID(Zombie" + name + "Gargantuar@ZombieProperties)",
+            ResourceGroups: [
+              "ZombieTutorialGargantuarGroup",
+              "ZombieTutorialImpGroup",
+              "ZombieGargantuarEffects"
+            ],
+            AudioGroups: ["ZombieGlobalGargantuarAudio"],
+            AnimRigClass: "ZombieAnimRig_Gargantuar",
+            PopAnim: "POPANIM_ZOMBIE_TUTORIAL_GARGANTUAR",
+            HomeWorld: "tutorial"
+          }
+        },
+        {
+          aliases: ["Zombie" + name + "Gargantuar"],
+          objclass: "ZombieGargantuarProps",
+          objdata: Object.assign({}, base, {
+            ArtScale: artScale,
+            AlmanacOffset: { x: -10, y: 40 },
+            AlmanacScale: 1,
+            ArmDropFraction: -1,
+            AttackRect: { mHeight: 95, mWidth: 30, mX: 0, mY: 10 },
+            CanBeFlickedOff: false,
+            CanSpawnPlantFood: true,
+            EatDPS: 0,
+            ExplodesWhenMowed: true,
+            FlickIsLaneRestricted: true,
+            HealthThresholdToImpAmmoLayers: [
+              {
+                HealthPercentThrowImp: 0.5,
+                ProjectileLayersToHide: impLayers
+              }
+            ],
+            HitRect: { mHeight: 95, mWidth: 62, mX: 10, mY: 10 },
+            Hitpoints: hp,
+            HypnoshroomEffectOffset: { x: 0, y: 120 },
+            ImpApex: 250,
+            ImpFlightTime: 1.5,
+            ImpSpawnOffset: { x: -100, y: 2, z: 115 },
+            ImpTargetColumn: 2,
+            ImpType: $("imptype").value,
+            IsValidPinchTarget: false,
+            MinPosXThrowImp: 400,
+            ScaledProps: stats([
+              { Arg1: 1.3, Arg2: 0.05, Formula: "standard", Key: "SmashDamage" }
+            ]),
+            Size: "large",
+            SkipHeadDropState: true,
+            SmashDamage: num("smash"),
+            SmashDuration: 2,
+            SoundOnAsh: "Play_Zomb_Global_Gargantuar_Mvmt_Death_Ash",
+            SoundOnElectrocute: "Play_Zomb_Global_Gargantuar_Mvmt_Shock",
+            SoundOnIdle: "Play_Zomb_Tutorial_Gargantuar_Mvmt_Idle",
+            Speed: speed,
+            StaticArtImageAsset: "IMAGE_GARGANTUAR",
+            ThrowImpDuration: 1,
+            WavePointCost: 1500,
+            Weight: 3000,
+            ZombieStats: [
+              { Type: "toughness", Value: "toughness7" },
+              { Type: "speed", Value: "speed3" }
+            ]
+          })
+        }
+      ];
+    }
+
+
+    /* ==================== Отрисовка страницы ==================== */
+
+    function render() {
+      // Показать только поля, подходящие выбранному виду
+      document.querySelectorAll("[data-for]").forEach(function (label) {
+        var kinds = label.dataset["for"].split(" ");
+        label.classList.toggle("hide", kinds.indexOf(type) < 0);
+      });
+
+      // Подсветить выбранную кнопку вида
+      document.querySelectorAll("#types button").forEach(function (button) {
+        button.setAttribute("aria-pressed", button.dataset.t === type);
+      });
+
+      nameOk();
+      $("out").textContent = JSON.stringify(build(), null, 4);
+    }
+
+    // Скачать текст как файл
+    function save(text, fileName) {
+      var link = document.createElement("a");
+      link.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+      link.download = fileName;
+      link.click();
+
+      setTimeout(function () {
+        URL.revokeObjectURL(link.href);
+      }, 1000);
+    }
+
+
+    /* ==================== Обработчики событий ==================== */
+
+    // Выбор вида зомби
+    document.querySelectorAll("#types button").forEach(function (button) {
+      button.onclick = function () {
+      saveFields();      // сначала запомнить поля старого вида
+      type = button.dataset.t;
+      loadFields();      // потом показать значения нового
+      render();
+      };
+    });
+
+    // Любое изменение в полях — пересобираем код
+    document.querySelectorAll("input[type=text], input[type=number]").forEach(function (input) {
+      input.oninput = render;
+    });
+document.querySelectorAll("select").forEach(function (select) {
+  select.addEventListener("change", render);
+});
+    // Кнопка «Скопировать»
+    $("copy").onclick = function () {
+      var text = $("out").textContent;
+
+      var copied = navigator.clipboard
+        ? navigator.clipboard.writeText(text)
+        : Promise.reject();
+
+      copied
+        .then(function () {
+          $("m1").textContent = "Скопировано.";
+        })
+        .catch(function () {
+          // Запасной вариант: выделяем код, пользователь копирует сам
+          var range = document.createRange();
+          range.selectNodeContents($("out"));
+
+          var selection = getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+
+          $("m1").textContent = "Код выделен — нажми Ctrl+C.";
+        });
+    };
+
+    // Кнопка «Скачать .json»
+    $("dl").onclick = function () {
+      if (!nameOk()) {
+        $("m1").textContent = "Сначала исправь имя.";
+        return;
+      }
+
+      save($("out").textContent, $("name").value.trim() + ".json");
+      $("m1").textContent = "Файл скачан.";
+    };
+
+    // Кнопка «Вставить и скачать уровень»
+    $("ins").onclick = function () {
+      var file = $("lvl").files[0];
+
+      if (!nameOk()) {
+        $("m2").textContent = "Сначала исправь имя.";
+        return;
+      }
+
+      if (!file) {
+        $("m2").textContent = "Выбери файл уровня (.json).";
+        return;
+      }
+
+      file.text()
+        .then(function (text) {
+          var level = JSON.parse(text);
+
+          if (!Array.isArray(level.objects)) {
+            $("m2").textContent = "В файле нет массива objects.";
+            return;
+          }
+
+          level.objects = level.objects.concat(build());
+          save(JSON.stringify(level, null, 4), file.name);
+          $("m2").textContent = "Готово: зомби добавлен, обновлённый уровень скачан.";
+        })
+        .catch(function (error) {
+          $("m2").textContent = "Не могу прочитать файл: " + error.message;
+        });
+    };
+
+    // Первая отрисовка при загрузке страницы
+    setupImpTypeOptions();
+    loadFields();
+    render();
+var themeToggle = $("themeToggle");
+var savedTheme = localStorage.getItem("zombieTheme");
+
+if (savedTheme) {
+  document.documentElement.setAttribute("data-theme", savedTheme);
+}
+
+function updateThemeButton() {
+  var theme = document.documentElement.getAttribute("data-theme");
+  var isDark = theme === "dark" ||
+    (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+themeToggle.textContent = "◐";
+}
+
+themeToggle.onclick = function () {
+  var theme = document.documentElement.getAttribute("data-theme");
+  var isDark = theme === "dark" ||
+    (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  var newTheme = isDark ? "light" : "dark";
+
+  document.documentElement.setAttribute("data-theme", newTheme);
+  localStorage.setItem("zombieTheme", newTheme);
+
+  updateThemeButton();
+};
+
+updateThemeButton();
+  </script>
+</body>
+</html>
