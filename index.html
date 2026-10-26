@@ -285,6 +285,27 @@ input[type="file"]::file-selector-button:hover {
 .theme-toggle:hover {
   background: var(--line);
 }
+	  
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+:root {
+  --scroll-thumb: #a0a0a0;
+  --scroll-track: #eeeeee;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --scroll-thumb: #505a48;
+  --scroll-track: #171d13;
+  color-scheme: dark;
+}
+
+input[type="number"] {
+  color-scheme: inherit;
+}
   </style>
 </head>
 
